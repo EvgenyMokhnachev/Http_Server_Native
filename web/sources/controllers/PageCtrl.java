@@ -3,12 +3,12 @@ package controllers;
 import server.HttpMethod;
 import server.HttpRequest;
 import server.HttpResponse;
-import server.annotations.HttpController;
+import server.annotations.HttpMap;
 
-@HttpController(method = HttpMethod.GET, path = "/")
+@HttpMap(method = HttpMethod.GET, path = "/")
 public class PageCtrl {
 
-    @HttpController(method = HttpMethod.GET, path = "main")
+    @HttpMap(method = HttpMethod.GET, path = "main")
     public void mainPage(HttpRequest request, HttpResponse httpResponse){
         httpResponse.setContent("<!DOCTYPE html>\n" +
                 "<html lang=\"en\">\n" +
@@ -23,7 +23,7 @@ public class PageCtrl {
                 "</html>");
     }
 
-    @HttpController(method = HttpMethod.GET, path = "")
+    @HttpMap(method = HttpMethod.GET, path = "")
     public void rootPage(HttpRequest request, HttpResponse httpResponse){
         httpResponse.setContent("<!DOCTYPE html>\n" +
                 "<html lang=\"en\">\n" +

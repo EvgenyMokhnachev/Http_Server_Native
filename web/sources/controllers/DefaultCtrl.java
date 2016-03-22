@@ -3,7 +3,7 @@ package controllers;
 import server.ContentType;
 import server.HttpRequest;
 import server.HttpResponse;
-import server.annotations.HttpController;
+import server.annotations.HttpMap;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,10 +11,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@HttpController(path = "/")
+@HttpMap(path = "/")
 public class DefaultCtrl {
 
-    @HttpController(path = "favicon.png")
+    @HttpMap(path = "favicon.png")
     public void favicon(HttpRequest httpRequest, HttpResponse response) {
         File file = new File("web/webapp/images/favicon.png");
 

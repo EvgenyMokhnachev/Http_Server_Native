@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface HttpController {
+public @interface HttpMap {
 
     HttpMethod method() default HttpMethod.ANY;
 
