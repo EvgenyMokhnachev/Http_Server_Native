@@ -12,22 +12,32 @@ public class ControllersLoader {
 
     private static Map<Class, Object> controllersEntices = new HashMap<>();
 
-    static {
-        String[] controllerFileNames = new String[0];
+//    static {
+//        String[] controllerFileNames = new String[0];
+//        try {
+//            controllerFileNames = new File(ControllersLoader.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath() + "/controllers").list();
+//        } catch (URISyntaxException e) {
+//            e.printStackTrace();
+//        }
+//        for(String controllerFileName : controllerFileNames){
+//            String className = controllerFileName.substring(0, controllerFileName.indexOf("."));
+//            try {
+//                Class<?> controllerClass = Class.forName("controllers."+className);
+//                        Object controllerInstance = controllerClass.newInstance();
+//                controllersEntices.put(controllerClass, controllerInstance);
+//            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
+
+    public static void setControllerClass(Class controllerClass){
         try {
-            controllerFileNames = new File(ControllersLoader.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath() + "/controllers").list();
-        } catch (URISyntaxException e) {
+            controllersEntices.put(controllerClass, controllerClass.newInstance());
+        } catch (InstantiationException e) {
             e.printStackTrace();
-        }
-        for(String controllerFileName : controllerFileNames){
-            String className = controllerFileName.substring(0, controllerFileName.indexOf("."));
-            try {
-                Class<?> controllerClass = Class.forName("controllers."+className);
-                        Object controllerInstance = controllerClass.newInstance();
-                controllersEntices.put(controllerClass, controllerInstance);
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
         }
     }
 

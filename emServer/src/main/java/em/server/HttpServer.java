@@ -6,7 +6,7 @@ import java.net.Socket;
 
 public class HttpServer {
 
-    public ServerConfigurator configuration;
+    public final ServerConfigurator configuration;
 
     private int serverPort;
     private ServerSocket serverSocket;
