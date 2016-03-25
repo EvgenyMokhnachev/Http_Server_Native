@@ -12,7 +12,6 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,7 +23,7 @@ public class ServerConfigurator {
     public void setConfigurationFilePath(String path){
         try {
             DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
-            f.setValidating(false);
+//            f.setValidating(false);
             DocumentBuilder builder = f.newDocumentBuilder();
             Document doc = builder.parse(Thread.currentThread().getClass().getResourceAsStream(path));
 
@@ -37,13 +36,6 @@ public class ServerConfigurator {
                     Node controllerConfigTag = controllerTagNodes.item(controllerTagNodeIndex);
                     if(controllerConfigTag.getNodeName().equals("autosearch")) {
                         String autoSearchPackage = controllerConfigTag.getTextContent().trim();
-
-                        try {
-                            System.out.println(Arrays.toString(getResourceListing(ServerConfigurator.class, autoSearchPackage+"/")));
-                        } catch (URISyntaxException e) {
-                            e.printStackTrace();
-                        }
-
                         String[] controllerClasses = new String[0];
                         try {
                             controllerClasses = getResourceListing(ServerConfigurator.class, autoSearchPackage+"/");
