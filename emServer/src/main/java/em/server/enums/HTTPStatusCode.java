@@ -1,4 +1,4 @@
-package em.server;
+package em.server.enums;
 
 public enum HTTPStatusCode {
 

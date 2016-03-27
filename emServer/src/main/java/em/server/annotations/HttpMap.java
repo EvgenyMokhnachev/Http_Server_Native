@@ -1,4 +1,6 @@
-package em.server;
+package em.server.annotations;
+
+import em.server.enums.HttpMethod;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

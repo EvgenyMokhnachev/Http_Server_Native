@@ -1,12 +1,14 @@
 package em.server;
 
-import java.io.File;
+import em.server.annotations.HttpMap;
+import em.server.enums.HTTPStatusCode;
+import em.server.enums.HttpMethod;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class ControllersLoader {
 
@@ -43,9 +45,13 @@ public class ControllersLoader {
                         continue;
                     }
 
-                    if(Objects.equals(classAnnotation.path() + methodAnnotation.path(), request.getPath())) {
-                        foundMethodsByPath.put(method, clsInst);
-                    }
+                    try {
+                        Pattern pattern = Pattern.compile("^" + classAnnotation.path() + methodAnnotation.path() + "$");
+                        if(pattern.matcher(request.getPath()).matches()){
+                            foundMethodsByPath.put(method, clsInst);
+                        }
+                    } catch (Exception ignore) {}
+
                 }
             }
         }

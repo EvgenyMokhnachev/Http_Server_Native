@@ -1,5 +1,8 @@
 package em.server;
 
+import em.server.enums.ContentType;
+import em.server.enums.HTTPStatusCode;
+
 public class HttpResponse {
 
     private String http_ver;

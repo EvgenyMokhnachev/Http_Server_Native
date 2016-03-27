@@ -1,6 +1,5 @@
 package em.server;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -27,7 +26,16 @@ public class HTMLViewer {
             e.printStackTrace();
         }
 
-        this.html =  new String(result);
+
+        String parsedHtml = new String(result);
+        for(Map.Entry<String, Object> paramEntity : params.entrySet()){
+            int keyIndex = parsedHtml.indexOf("#"+paramEntity.getKey());
+            if(keyIndex > -1){
+                parsedHtml = parsedHtml.replace("#" + paramEntity.getKey(), (String) paramEntity.getValue());
+            }
+        }
+
+        this.html = parsedHtml;
     }
 
     public String getView(){

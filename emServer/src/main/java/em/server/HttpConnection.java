@@ -2,7 +2,9 @@ package em.server;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class HttpConnection {
 
@@ -12,39 +14,66 @@ public class HttpConnection {
     private HttpRequest httpRequest;
     private HttpResponse httpResponse;
 
-    public HttpConnection(Socket socket){
+    private byte[] inputBytes = new byte[0];
+
+    public HttpConnection(Socket socket) {
         try {
             inputStream = socket.getInputStream();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        try {
-            outputStream = socket.getOutputStream();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
         try {
-            ArrayList<String> stringHeaders = new ArrayList<String>();
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            while(true) {
-                String s = bufferedReader.readLine();
-                if(s == null || s.trim().length() == 0) {
+//            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+
+//            while (!inputStreamReader.ready()) {
+//                System.out.println("wait input stream");
+//            }
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            while (true){
+                int bufferSize = inputStream.available() == 0 ? 32768 : inputStream.available();
+                inputBytes = new byte[bufferSize];
+                int readCount = inputStream.read(inputBytes);
+                if (readCount == -1){
                     break;
-                } else {
-                    stringHeaders.add(s);
+                }
+
+                if(readCount > 0) {
+                    baos.write(inputBytes, 0, readCount);
                 }
             }
+            baos.flush();
+            baos.close();
 
-            httpRequest = new HttpRequest(stringHeaders);
+//            inputStreamReader.close();
+//            inputStream.close();
+
+            inputBytes = baos.toByteArray();
+
+//            while (inputStreamReader.ready()) {
+//                inputBytes = Arrays.copyOf(inputBytes, inputBytes.length + 1);
+//                inputBytes[inputBytes.length - 1] = (byte) inputStreamReader.read();
+//            }
+
+            String stringHeaders = new String(inputBytes);
+            String[] splitHeaders = stringHeaders.split("\\r\\n");
+
+            httpRequest = new HttpRequest(splitHeaders);
             httpResponse = new HttpResponse(httpRequest.getHttpVer());
 
             ControllersLoader.loadController(httpRequest, httpResponse);
 
+            try {
+                outputStream = socket.getOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             outputStream.write(httpResponse.getHeadersBytes());
             outputStream.write(httpResponse.getContentBytes());
             outputStream.flush();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
