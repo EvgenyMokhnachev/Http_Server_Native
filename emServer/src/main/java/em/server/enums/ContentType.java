@@ -25,7 +25,7 @@ public enum ContentType {
     public static ContentType valueOfString(String data){
         ContentType[] values = ContentType.values();
         for(ContentType connectionType : values){
-            if(connectionType.type.equals(data)){
+            if(data.contains(connectionType.type)){
                 return connectionType;
             }
         }

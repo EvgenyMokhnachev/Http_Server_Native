@@ -1,41 +1,52 @@
 package em.server;
 
+import em.server.exceptions.FailedGetTheFile;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
 public class HTMLViewer {
 
-    private String html;
+    private String html = "";
 
     private HTMLViewer(String htmlPath, Map<String, Object> params) {
-        InputStream resourceAsStream = HTMLViewer.class.getClassLoader().getResourceAsStream(htmlPath);
-        byte[] result = null;
+//        InputStream resourceAsStream = HTMLViewer.class.getClassLoader().getResourceAsStream(htmlPath);
+//        byte[] result = null;
+//        try {
+//            result = new byte[resourceAsStream.available()];
+//            int resultArrayIndex = 0;
+//            while (true) {
+//                int read = resourceAsStream.read();
+//                if(read == -1) {
+//                    break;
+//                } else {
+//                    result[resultArrayIndex++] = (byte) read;
+//                }
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } finally {
+//            try {
+//                resourceAsStream.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
         try {
-            result = new byte[resourceAsStream.available()];
-            int resultArrayIndex = 0;
-            while (true) {
-                int read = resourceAsStream.read();
-                if(read == -1) {
-                    break;
-                } else {
-                    result[resultArrayIndex++] = (byte) read;
+            FileReader fileReader = new FileReader("/"+htmlPath);
+            String parsedHtml = new String(fileReader.getBytes());
+            for(Map.Entry<String, Object> paramEntity : params.entrySet()){
+                int keyIndex = parsedHtml.indexOf("#"+paramEntity.getKey());
+                if(keyIndex > -1){
+                    parsedHtml = parsedHtml.replace("#" + paramEntity.getKey(), (String) paramEntity.getValue());
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+
+            this.html = parsedHtml;
+        } catch (FailedGetTheFile failedGetTheFile) {
+            failedGetTheFile.printStackTrace();
         }
-
-
-        String parsedHtml = new String(result);
-        for(Map.Entry<String, Object> paramEntity : params.entrySet()){
-            int keyIndex = parsedHtml.indexOf("#"+paramEntity.getKey());
-            if(keyIndex > -1){
-                parsedHtml = parsedHtml.replace("#" + paramEntity.getKey(), (String) paramEntity.getValue());
-            }
-        }
-
-        this.html = parsedHtml;
     }
 
     public String getView(){

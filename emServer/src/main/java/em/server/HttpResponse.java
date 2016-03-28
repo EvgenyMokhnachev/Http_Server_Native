@@ -40,7 +40,7 @@ public class HttpResponse {
         this.content_type = contentType;
     }
 
-    public byte[] getHeadersBytes(){
+    private byte[] getHeadersBytes(){
         StringBuffer result = new StringBuffer();
 
         result.append("HTTP/").append(this.http_ver).append(" ").append(this.status_code.code);
@@ -58,8 +58,29 @@ public class HttpResponse {
         return new String(result).getBytes();
     }
 
-    public byte[] getContentBytes(){
+    private byte[] getContentBytes(){
         return this.content;
     }
 
+    public byte[] getBytes(){
+        byte[] headersBytes = getHeadersBytes();
+        byte[] contentBytes = getContentBytes();
+        byte[] responseBytes = new byte[headersBytes.length + contentBytes.length];
+
+        int responseBytesIndex = 0;
+
+        for(byte headerByte : headersBytes){
+            responseBytes[responseBytesIndex++] = headerByte;
+        }
+
+        for(byte contentByte : contentBytes){
+            responseBytes[responseBytesIndex++] = contentByte;
+        }
+
+        return responseBytes;
+    }
+
+    public int getContentLength() {
+        return content_length;
+    }
 }

@@ -7,9 +7,7 @@ import java.net.Socket;
 public class HttpServer {
 
     public final ServerConfigurator configuration;
-
     private int serverPort;
-    private ServerSocket serverSocket;
 
     public HttpServer(int port){
         this.configuration = new ServerConfigurator();
@@ -18,27 +16,21 @@ public class HttpServer {
 
     public void start(){
         try {
-            serverSocket = new ServerSocket(serverPort);
+            ServerSocket serverSocket = new ServerSocket(serverPort);
 
             System.out.println("Start server on port " + serverPort + "!");
 
-            while (true){
-                final Socket socket = serverSocket.accept();
-                new Thread(){
-                    HttpConnection httpConnection = new HttpConnection(socket);
-                };
+            while (!serverSocket.isClosed()){
+                Socket socket = serverSocket.accept();
+                try {
+                    new Thread(new HttpConnection(socket)).start();
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
             }
         } catch (IOException e) {
             System.out.println("Start server on port " + serverPort + " failed!");
             e.printStackTrace();
-        }
-    }
-
-    public void stop(){
-        try {
-            serverSocket.close();
-        } catch (IOException e) {
-            System.out.println("Stop server on port " + serverPort + " failed!");
         }
     }
 
