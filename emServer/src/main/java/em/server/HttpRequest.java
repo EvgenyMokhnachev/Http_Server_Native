@@ -3,23 +3,22 @@ package em.server;
 import em.server.enums.ContentType;
 import em.server.enums.HTTPConnectionType;
 import em.server.enums.HttpMethod;
-import em.server.exceptions.InvalidHttpProtocol;
 
 import java.io.*;
-import java.net.URLDecoder;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HttpRequest {
-    private static final Pattern patternHeader = Pattern.compile("^(.*):\\s(.*)\r\n$");
-    private static final Pattern patternMethod = Pattern.compile("^("+ HttpMethod.rageExpMethods +")\\s(/*|/*.*)\\sHTTP/((\\d\\.\\d)|(\\d))\r\n$");
-    private static final Pattern patternContentDisposition = Pattern.compile("^Content-Disposition: form-data; name=\"(.*)*\"(; filename=\"(.*)*\")*$");
-    private static final Pattern patternContentType = Pattern.compile("^Content-Type:\\s(.*)$");
-//    private static final Pattern patternInitMethodAndPathAndHTTPVer = Pattern.compile("^("+ HttpMethod.rageExpMethods +")\\s(/*|/*.*)\\sHTTP/(\\d*.\\d|\\d*)\r\n$");
-    private static final String endHeadersString = "\r\n";
-    private static final String endHeadersStringR = "\r";
-    private static final String endHeadersStringN = "\n";
+    private static final Pattern PATTERN_HEADER = Pattern.compile("^(.*):\\s(.*)\r\n$");
+    private static final Pattern PATTERN_METHOD = Pattern.compile("^("+ HttpMethod.rageExpMethods +")\\s(/*|/*.*)\\sHTTP/((\\d\\.\\d)|(\\d))\r\n$");
+    private static final Pattern PATTERN_CONTENT_DISPOSITION = Pattern.compile("^Content-Disposition: form-data; name=\"(.*)*\"(; filename=\"(.*)*\")*$");
+    private static final Pattern PATTERN_CONTENT_TYPE = Pattern.compile("^Content-Type:\\s(.*)$");
+    private static final String END_HEADERS_STRING = "\r\n";
+    private static final int END_HEADERS_STRING_LENGTH = END_HEADERS_STRING.length();
+    private static final int ZERO = 0;
+    private static final int INDEX_NOT_FOUNT = -1;
+    private static final int BUFFER_SIZE = 8192;
 
     private HttpMethod method;
     private String path;
@@ -49,29 +48,26 @@ public class HttpRequest {
         }
     }
 
-    private byte[] lazyBuffer = new byte[0];
+    private byte[] lazyBuffer = new byte[ZERO];
     private byte[] readLineFromInputStream(InputStream inputStream){
         byte[] readBytes = Arrays.copyOf(lazyBuffer, lazyBuffer.length);
 
-        int indexNewLine = new String(readBytes).indexOf(endHeadersString);
-        if (indexNewLine > -1) {
-            byte[] lineBytes = new byte[indexNewLine + 2];
-            byte[] newLazyBuffer = new byte[lazyBuffer.length - indexNewLine - 2];
-            System.arraycopy(readBytes, 0, lineBytes, 0, indexNewLine + 2);
-            System.arraycopy(readBytes, indexNewLine + 2, newLazyBuffer, 0, readBytes.length - indexNewLine - 2);
+        int indexNewLine = new String(readBytes).indexOf(END_HEADERS_STRING);
+        if (indexNewLine > INDEX_NOT_FOUNT) {
+            byte[] lineBytes = new byte[indexNewLine + END_HEADERS_STRING_LENGTH];
+            byte[] newLazyBuffer = new byte[lazyBuffer.length - indexNewLine - END_HEADERS_STRING_LENGTH];
+            System.arraycopy(readBytes, ZERO, lineBytes, ZERO, indexNewLine + END_HEADERS_STRING_LENGTH);
+            System.arraycopy(readBytes, indexNewLine + END_HEADERS_STRING_LENGTH, newLazyBuffer, ZERO, readBytes.length - indexNewLine - END_HEADERS_STRING_LENGTH);
             lazyBuffer = newLazyBuffer;
             return lineBytes;
         }
 
         try {
-            byte[] buffer = new byte[8192];
+            byte[] buffer = new byte[BUFFER_SIZE];
             int readCount = inputStream.read(buffer);
             int oldReadBytesLength = readBytes.length;
             readBytes = Arrays.copyOf(readBytes, oldReadBytesLength + readCount);
-            for(int readBytesIndex = oldReadBytesLength; readBytesIndex < readBytes.length; readBytesIndex++){
-                readBytes[readBytesIndex] = buffer[readBytesIndex - oldReadBytesLength];
-            }
-
+            System.arraycopy(buffer, ZERO, readBytes, oldReadBytesLength, readBytes.length - oldReadBytesLength);
             lazyBuffer = readBytes;
         } catch (IOException e) {
             e.printStackTrace();
@@ -89,7 +85,7 @@ public class HttpRequest {
         final String emptyStr = "";
         while (true) {
             byte[] readLineBytes = readLineFromInputStream(inputStream);
-            String readLine = new String(readLineBytes).replace(endHeadersString, emptyStr);
+            String readLine = new String(readLineBytes).replace(END_HEADERS_STRING, emptyStr);
 
             if(readLine.contains(boundary)){
                 readContent = false;
@@ -110,12 +106,12 @@ public class HttpRequest {
                 continue;
             }
 
-            if(patternContentDisposition.matcher(readLine).matches()){
+            if(PATTERN_CONTENT_DISPOSITION.matcher(readLine).matches()){
                 multipartFormData.Content_Disposition = readLine;
                 continue;
             }
 
-            if(patternContentType.matcher(readLine).matches()){
+            if(PATTERN_CONTENT_TYPE.matcher(readLine).matches()){
                 multipartFormData.Content_Type = readLine;
                 continue;
             }
@@ -141,19 +137,19 @@ public class HttpRequest {
 
                     String headerStr = new String(headerBytes);
 
-                    Matcher matcherMethod = patternMethod.matcher(headerStr);
+                    Matcher matcherMethod = PATTERN_METHOD.matcher(headerStr);
                     if(matcherMethod.matches()) {
                         initMethodAndPathAndHttpVer(headerStr);
                         break;
                     }
 
-                    Matcher matcherHeader = patternHeader.matcher(headerStr);
+                    Matcher matcherHeader = PATTERN_HEADER.matcher(headerStr);
                     if(matcherHeader.matches()) {
                         initializationHeader(matcherHeader.group(1), matcherHeader.group(2));
                         break;
                     }
 
-                    if(headerStr.equals(endHeadersString)) {
+                    if(headerStr.equals(END_HEADERS_STRING)) {
                         readHeaders = false;
                         break;
                     }
@@ -199,8 +195,7 @@ public class HttpRequest {
     }
 
     private void initMethodAndPathAndHttpVer(String header){
-//        Matcher matcher = patternInitMethodAndPathAndHTTPVer.matcher(header);
-        Matcher matcher = patternMethod.matcher(header);
+        Matcher matcher = PATTERN_METHOD.matcher(header);
         if(matcher.matches()){
             method = HttpMethod.valueOf(matcher.group(1));
             path = matcher.group(2);
