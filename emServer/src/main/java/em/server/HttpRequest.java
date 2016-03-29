@@ -18,7 +18,7 @@ public class HttpRequest {
     private static final int END_HEADERS_STRING_LENGTH = END_HEADERS_STRING.length();
     private static final int ZERO = 0;
     private static final int INDEX_NOT_FOUNT = -1;
-    private static final int BUFFER_SIZE = 8192;
+    private static final int BUFFER_SIZE = 65536;
 
     private HttpMethod method;
     private String path;
