@@ -59,6 +59,10 @@ public class HttpConnection implements Runnable {
 
             controllersLoader.loadController(httpRequest, httpResponse);
 
+            if(httpRequest.multipartForm != null) {
+                httpRequest.multipartForm.removeTempFiles();
+            }
+
             outputStream.write(httpResponse.getBytes());
             outputStream.flush();
         } catch (Exception e) {

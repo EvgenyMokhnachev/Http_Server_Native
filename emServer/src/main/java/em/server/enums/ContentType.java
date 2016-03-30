@@ -14,7 +14,10 @@ public enum ContentType {
     IMAGE_PNG("image/png"),
     IMAGE_BMP("image/bmp"),
     APPLICATION_X_WWW_FORM_URLENCODED("application/x-www-form-urlencoded"),
+    APPLICATION_X_ZIP_COMPRESSED("application/x-zip-compressed"),
+    APPLICATION_OCTEC_STREAM("application/octet-stream"),
     MULTIPART_FORM_DATA("multipart/form-data");
+
 
     public String type;
 

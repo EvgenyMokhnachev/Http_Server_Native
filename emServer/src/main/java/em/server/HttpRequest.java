@@ -39,11 +39,13 @@ public class HttpRequest {
     private Integer content_length;
     private ContentType content_type;
     private String boundary;
+    protected MultipartForm multipartForm;
 
     public HttpRequest(InputStream inputStream) {
         initializationHeaders(inputStream);
 
         if(this.content_type == ContentType.MULTIPART_FORM_DATA){
+            multipartForm = new MultipartForm();
             initializationMultipartFormData(inputStream);
         }
     }
@@ -77,8 +79,13 @@ public class HttpRequest {
     }
 
     private void initializationMultipartFormData(InputStream inputStream){
-        List<MultipartFormData> multipartFormDataList = new ArrayList<>();
-        MultipartFormData multipartFormData = null;
+//        List<MultipartFormData> multipartFormDataList = new ArrayList<>();
+//        MultipartFormData multipartFormData = null;
+        String name = null;
+        String fileName = null;
+        ContentType contentType = null;
+        MultipartForm.FormData multipartFormData = null;
+
         boolean readContent = false;
         final String boundary = "--" + this.boundary;
         final String endBoundary = boundary + "--";
@@ -88,35 +95,68 @@ public class HttpRequest {
             String readLine = new String(readLineBytes).replace(END_HEADERS_STRING, emptyStr);
 
             if(readLine.contains(boundary)){
-                readContent = false;
-                if(multipartFormData != null) {
-                    multipartFormData.closeStream();
-                    multipartFormDataList.add(multipartFormData);
+                name = null;
+                fileName= null;
+                contentType = null;
+
+                if(readContent) {
+                    if(multipartFormData != null) multipartFormData.endWrite();
+                    readContent = false;
+                    if(readLine.equals(endBoundary)) break;
+                } else {
+                    continue;
                 }
 
-                if(readLine.equals(endBoundary)) break;
+//                if(readContent) readContent = false;
 
-                multipartFormData = new MultipartFormData();
+//                if(multipartFormData != null) {
+//                    multipartFormData.closeStream();
+//                    multipartFormDataList.add(multipartFormData);
+//                }
 
-                continue;
+//                if(readLine.equals(endBoundary)) break;
+
+//                multipartFormData = new MultipartFormData();
+
+//                continue;
             }
 
             if(readContent){
-                multipartFormData.setContent(readLineBytes);
+//                multipartFormData.setContent(readLineBytes);
+                if(multipartFormData != null) {
+                    multipartFormData.appendData(readLineBytes);
+                }
                 continue;
             }
 
             if(PATTERN_CONTENT_DISPOSITION.matcher(readLine).matches()){
-                multipartFormData.Content_Disposition = readLine;
+                Pattern patternTextFormData = Pattern.compile("^Content-Disposition:\\sform-data;\\sname=\"(.*)\"$");
+                Pattern patternFileFormData = Pattern.compile("^Content-Disposition:\\sform-data;\\sname=\"(.*)\"; filename=\"(.*)\"$");
+
+                Matcher matcherTextFormData = patternTextFormData.matcher(readLine);
+                if(matcherTextFormData.matches()){
+                    name = matcherTextFormData.group(1);
+                }
+
+                Matcher matcherFileFormData = patternFileFormData.matcher(readLine);
+                if(matcherFileFormData.matches()) {
+                    name = matcherFileFormData.group(1);
+                    fileName = matcherFileFormData.group(2);
+                }
+
+//                multipartFormData.Content_Disposition = readLine;
                 continue;
             }
 
-            if(PATTERN_CONTENT_TYPE.matcher(readLine).matches()){
-                multipartFormData.Content_Type = readLine;
+            Matcher matcherContentType = PATTERN_CONTENT_TYPE.matcher(readLine);
+            if(matcherContentType.matches()){
+                contentType = ContentType.valueOfString(matcherContentType.group(1));
+//                multipartFormData.Content_Type = readLine;
                 continue;
             }
 
             if(readLine.equals(emptyStr)){
+                multipartFormData = name == null ? null : fileName == null ? multipartForm.createFormDataText(name) : fileName.equals(emptyStr) ? null : multipartForm.createFormDataFile(name, fileName, contentType);
                 readContent = true;
             }
         }
