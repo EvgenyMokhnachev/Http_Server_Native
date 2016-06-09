@@ -5,6 +5,7 @@ import em.server.enums.HTTPConnectionType;
 import em.server.enums.HttpMethod;
 
 import java.io.*;
+import java.net.URLDecoder;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,10 +37,12 @@ public class HttpRequest {
     private String accept_charset;
     private String referer;
     private String origin;
+    private String x_requested_with;
     private Integer content_length;
     private ContentType content_type;
     private String boundary;
     protected MultipartForm multipartForm;
+    private Map<String, String> wwwForm = new HashMap<>();
 
     public HttpRequest(InputStream inputStream) {
         initializationHeaders(inputStream);
@@ -47,6 +50,45 @@ public class HttpRequest {
         if(this.content_type == ContentType.MULTIPART_FORM_DATA){
             multipartForm = new MultipartForm();
             initializationMultipartFormData(inputStream);
+        }
+
+        if(this.content_type == ContentType.APPLICATION_X_WWW_FORM_URLENCODED) {
+            initApplicationWWWForm(inputStream);
+        }
+    }
+
+    public String getParam(String key){
+        return wwwForm.get(key);
+    }
+
+    private void initApplicationWWWForm(InputStream inputStream) {
+        try {
+            byte[] headerBytes = new byte[0];
+            while (true) {
+                if (inputStream.available() == 0) break;
+                int read = inputStream.read();
+                if(read == -1) break;
+
+                headerBytes = Arrays.copyOf(headerBytes, headerBytes.length + 1);
+                headerBytes[headerBytes.length - 1] = (byte) read;
+
+                if(inputStream.available() == 0) {
+                    String headerStr = new String(headerBytes);
+                    String[] formDataStrings = headerStr.split("&");
+                    for(String formDataString : formDataStrings){
+                        String[] formDataStringSplit = formDataString.split("=");
+                        String key = formDataStringSplit[0];
+                        String value = formDataStringSplit[1];
+
+                        key = URLDecoder.decode(key, "UTF-8");
+                        value = URLDecoder.decode(value, "UTF-8");
+
+                        this.wwwForm.put(key, value);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -79,8 +121,6 @@ public class HttpRequest {
     }
 
     private void initializationMultipartFormData(InputStream inputStream){
-//        List<MultipartFormData> multipartFormDataList = new ArrayList<>();
-//        MultipartFormData multipartFormData = null;
         String name = null;
         String fileName = null;
         ContentType contentType = null;
@@ -106,23 +146,9 @@ public class HttpRequest {
                 } else {
                     continue;
                 }
-
-//                if(readContent) readContent = false;
-
-//                if(multipartFormData != null) {
-//                    multipartFormData.closeStream();
-//                    multipartFormDataList.add(multipartFormData);
-//                }
-
-//                if(readLine.equals(endBoundary)) break;
-
-//                multipartFormData = new MultipartFormData();
-
-//                continue;
             }
 
             if(readContent){
-//                multipartFormData.setContent(readLineBytes);
                 if(multipartFormData != null) {
                     multipartFormData.appendData(readLineBytes);
                 }
@@ -144,14 +170,12 @@ public class HttpRequest {
                     fileName = matcherFileFormData.group(2);
                 }
 
-//                multipartFormData.Content_Disposition = readLine;
                 continue;
             }
 
             Matcher matcherContentType = PATTERN_CONTENT_TYPE.matcher(readLine);
             if(matcherContentType.matches()){
                 contentType = ContentType.valueOfString(matcherContentType.group(1));
-//                multipartFormData.Content_Type = readLine;
                 continue;
             }
 
@@ -219,6 +243,7 @@ public class HttpRequest {
             case ("referer"): referer = data; break;
             case ("origin"): origin = data; break;
             case ("content-length"): content_length = Integer.valueOf(data); break;
+            case ("x-requested-with"): x_requested_with = data; break;
             case ("content-type"): {
                 content_type = ContentType.valueOfString(data);
                 if(content_type == ContentType.MULTIPART_FORM_DATA){

@@ -1,14 +1,14 @@
 package em.server;
 
+import em.server.annotations.FormParam;
 import em.server.annotations.HttpMap;
 import em.server.enums.HTTPStatusCode;
 import em.server.enums.HttpMethod;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.lang.reflect.Parameter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -82,7 +82,29 @@ public class ControllersLoader {
                 Object ctrlInstance = entry.getValue();
 
                 try {
-                    method.invoke(ctrlInstance, request, response);
+                    Object[] arguments = new Object[method.getParameters().length];
+                    Parameter[] methodParameters = method.getParameters();
+                    int parameterIndex = 0;
+                    for(Parameter methodParameter : methodParameters) {
+                        if(methodParameter.getType().equals(HttpRequest.class)) {
+                            arguments[parameterIndex++] = request;
+                            continue;
+                        }
+
+                        if(methodParameter.getType().equals(HttpResponse.class)) {
+                            arguments[parameterIndex++] = response;
+                            continue;
+                        }
+
+                        FormParam formParamAnnotation = (FormParam) methodParameter.getAnnotation(FormParam.class);
+                        if(formParamAnnotation != null) {
+                            String paramName = formParamAnnotation.name();
+                            String paramValue = request.getParam(paramName);
+                            arguments[parameterIndex++] = paramValue;
+                        }
+                    }
+
+                    method.invoke(ctrlInstance, arguments);
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     e.printStackTrace();
                 }

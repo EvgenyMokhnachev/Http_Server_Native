@@ -36,10 +36,13 @@ public class HTMLViewer {
         try {
             FileReader fileReader = new FileReader("/"+htmlPath);
             String parsedHtml = new String(fileReader.getBytes());
-            for(Map.Entry<String, Object> paramEntity : params.entrySet()){
-                int keyIndex = parsedHtml.indexOf("#"+paramEntity.getKey());
-                if(keyIndex > -1){
-                    parsedHtml = parsedHtml.replace("#" + paramEntity.getKey(), (String) paramEntity.getValue());
+
+            if(params != null) {
+                for(Map.Entry<String, Object> paramEntity : params.entrySet()){
+                    int keyIndex = parsedHtml.indexOf("#"+paramEntity.getKey());
+                    if(keyIndex > -1){
+                        parsedHtml = parsedHtml.replace("#" + paramEntity.getKey(), (String) paramEntity.getValue());
+                    }
                 }
             }
 

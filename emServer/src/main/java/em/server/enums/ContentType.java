@@ -16,7 +16,9 @@ public enum ContentType {
     APPLICATION_X_WWW_FORM_URLENCODED("application/x-www-form-urlencoded"),
     APPLICATION_X_ZIP_COMPRESSED("application/x-zip-compressed"),
     APPLICATION_OCTEC_STREAM("application/octet-stream"),
-    MULTIPART_FORM_DATA("multipart/form-data");
+    MULTIPART_FORM_DATA("multipart/form-data"),
+    APPLICATION_X_FONT_WOFF("application/x-font-woff"),
+    FONT_OPENTYPE("font/opentype");
 
 
     public String type;
