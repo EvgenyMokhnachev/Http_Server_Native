@@ -1,8 +1,6 @@
 package em.server;
 
-import em.server.enums.ContentType;
-import em.server.enums.HTTPConnectionType;
-import em.server.enums.HttpMethod;
+import em.server.enums.*;
 
 import java.io.*;
 import java.net.URLDecoder;
@@ -43,6 +41,10 @@ public class HttpRequest {
     private String boundary;
     protected MultipartForm multipartForm;
     private Map<String, String> wwwForm = new HashMap<>();
+    private HttpUpgradeType upgrade;
+    private WebSocketVersion webSocketVersion;
+    private String secWebSocketKey;
+    private String secWebSocketExtensions;
 
     public HttpRequest(InputStream inputStream) {
         initializationHeaders(inputStream);
@@ -55,6 +57,16 @@ public class HttpRequest {
         if(this.content_type == ContentType.APPLICATION_X_WWW_FORM_URLENCODED) {
             initApplicationWWWForm(inputStream);
         }
+    }
+
+    public boolean isWebSocket(){
+        boolean result = false;
+        if(this.connection == HTTPConnectionType.Upgrade) {
+            if(this.upgrade == HttpUpgradeType.websocket){
+                result = true;
+            }
+        }
+        return result;
     }
 
     public String getParam(String key){
@@ -250,11 +262,17 @@ public class HttpRequest {
                     boundary = data.substring(data.lastIndexOf("boundary=") + "boundary=".length(), data.length());
                 }
             } break;
+            case ("upgrade"): upgrade = HttpUpgradeType.valueOf(data); break;
+            case ("sec-websocket-version"): webSocketVersion = WebSocketVersion.valueOfString(data); break;
+            case ("sec-websocket-key"): secWebSocketKey = data; break;
+            case ("sec-websocket-extensions"): secWebSocketExtensions = data; break;
+
             default: {
-                System.out.println("Unknown header:");
+                System.out.println(" ");
+                System.out.println("Unknown header");
                 System.out.println(name);
-                System.out.println("header data:");
                 System.out.println(data);
+                System.out.println(" ");
             }
         }
     }
